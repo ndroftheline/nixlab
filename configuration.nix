@@ -105,6 +105,22 @@
     };
   };
 
+  # ---------------------------------------------------------
+  # EXAMPLE SERVICE: FILEBROWSER (Web-based File Manager)
+  # ---------------------------------------------------------
+  # Provides a sleek Web UI for the /mnt/data directory.
+  services.filebrowser = {
+    enable = true;
+    settings = {
+      address = "127.0.0.1";
+      port = 8080;
+      root = "/mnt/data"; # Maps directly to the shared household directory
+      baseurl = "/files"; # Demonstrates configuring an app for a reverse proxy subpath
+      # Store the user database in the resilient appdata subvolume
+      database = "/var/lib/appdata/filebrowser.db"; 
+    };
+  };
+
   # Windows Service Discovery & Multicast DNS
   services.samba-wsdd = { enable = true; openFirewall = true; };
   services.avahi = {
@@ -153,6 +169,15 @@
             <div class="info">
               <h2>Server Manual</h2>
               <p>Deployment & Operations</p>
+            </div>
+          </a>
+
+          <!-- Example Service Card -->
+          <a href="/files/" target="_blank" class="card">
+            <i class="fas fa-folder-open icon" style="color: #fbbf24;"></i>
+            <div class="info">
+              <h2>Filebrowser</h2>
+              <p>Web File Manager</p>
             </div>
           </a>
           
@@ -249,12 +274,18 @@
       # TODO: Update with the target household's local FQDN, static IP, and Tailscale FQDN
       "http://homeserver.local, http://192.168.1.10, http://homeserver.tailnet-xyz.ts.net, http://localhost, http://127.0.0.1".extraConfig = ''
         redir /manual /manual/
+        redir /files /files/     # <--- Example: Redirect to trailing slash
 
         # Intercept the README query and dynamically serve the live file on the disk
         handle /manual/README.md {
             root * /etc/nixos
             rewrite * /readme.md
             file_server
+        }
+
+        # Example Service: Route traffic to the Filebrowser backend
+        handle /files* {
+            reverse_proxy 127.0.0.1:8080
         }
 
         # Catch-all fallthrough serves the native dashboard & manual assets

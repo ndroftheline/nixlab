@@ -37,7 +37,7 @@
     initialPassword = "nixos";
     openssh.authorizedKeys.keys = [
       # TODO: Paste admin SSH public key here
-      "ssh-ed25519 AAAAC3NzaC1..."
+      #"ssh-ed25519 AAAAC3NzaC1..."
     ];
   };
 
@@ -62,7 +62,12 @@
     vim
     curl
     tmux
+    wget
   ];
+
+  # System services
+  # Enable VS Code Server patching for remote development
+  services.vscode-server.enable = true;
 
   # Declarative directory enforcement and permissions on boot
   system.activationScripts.sharedPermissions = {

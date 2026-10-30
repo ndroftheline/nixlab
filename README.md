@@ -1,6 +1,6 @@
 # Homelab - Deployment & Operations Manual
 
-This document acts as the definitive operational manual for the homelab appliance, detailing deployment, day-to-day operations, and infrastructure extensions.
+This document acts as the definitive operational manual for the nixlab home server, detailing deployment, day-to-day operations, and infrastructure extensions.
 
 ---
 
@@ -25,6 +25,18 @@ This deployment utilizes a declarative hybrid disk management layout via `disko`
 | **Boot Drive** | Root OS & Nix Store | BTRFS (Subvolumes) | `disko.nix` | `/`, `/nix`, `/var/lib/appdata` |
 | **Data Drives** | Auxiliary Storage | EXT4 / BTRFS | `configuration.nix`| `/mnt/data` |
 
+### Architecture & Modularity
+This repository uses a modular design to support multiple deployment targets without duplicating code.
+
+* **`common.nix`**: The baseline "DNA" of your environment (users, CLI tools, Nix settings). This is imported by every machine to ensure a consistent developer experience.
+* **`modules/*.nix`**: Self-contained, opt-in services (e.g., Caddy, Filebrowser, Dashboard). These define *what a machine does*.
+* **Target Manifests (`configuration.nix`, `wsl.nix`)**: The entry points. They define the hardware/bootloader and import a specific mix of modules.
+
+### WSL Development Environment
+The `wsl` target allows you to test new services locally on a Windows machine before pushing them to the bare-metal server. 
+
+Because WSL abstracts networking and shares the Windows kernel, hardware-level services (Samba, Disko, Avahi) only belong in the bare-metal `configuration.nix`. However, web-based services (Caddy, Filebrowser, Dashboard) can be imported into `wsl.nix`, allowing you to safely test HTTP routing and UI changes on `http://localhost` before deploying to production.
+
 ---
 
 ## Initial Deployment Instructions
@@ -46,11 +58,11 @@ This deployment utilizes a declarative hybrid disk management layout via `disko`
 
 These guides outline the standard operating procedures for extending and managing the server.
 
-### Runbook A: Accessing the Server (Remote & Local)
+### Runbook A: Accessing the Server web UI (Remote & Local)
 
 - **Main Dashboard (Local):** `http://homeserver.local/` 
 - **Main Dashboard (Tailscale):** `http://homeserver.tailnet-xyz.ts.net/`
-- **Network SMB Share:** `\\homeserver\Data` or `smb://homeserver.local/Data` (Credentials: `household` / `household`)
+- **Network SMB Share:** `\\homeserver\Data` or `smb://homeserver.local/Data` (Default credentials: `household` / `household`)
 
 ---
 
@@ -66,9 +78,9 @@ While you can access your files locally via the network SMB share, you can also 
 
 **Access Instructions:**
 1. Navigate to the **Filebrowser** app from the main dashboard (or go to `http://homeserver.local/files/`).
-2. Log in using the default administrator credentials:
+2. Log in using the administrator credentials:
    * **Username:** `admin`
-   * **Password:** `admin`
+   * **Password:** is randomly generated, check with journalctl
 3. **Important:** Change your password immediately by clicking the Settings (gear) icon in the sidebar, navigating to Global Settings, and updating the admin user profile.
 
 ---
@@ -100,8 +112,8 @@ NixOS is fully declarative, meaning the entire system state lives in text files.
 NixOS can be syntactically complex. This repository includes a `context-bundler.sh` script designed to rapidly package your entire server configuration into an LLM-friendly text prompt.
 
 **How to use the bundler:**
-1. From the `/etc/nixos` directory, run `./context-bundler.sh`.
-2. The script will generate a `context_bundle.txt` file containing your directory tree and the contents of all your `.nix` and script files.
+1. From the `/etc/nixos` directory, run `./bundle-context.sh`.
+2. The script will generate a `context-bundle.txt` file containing your directory tree and the contents of all your `.nix` and script files.
 3. Open `context_bundle.txt`, copy its entire contents, and paste it into Gemini, ChatGPT, or Claude.
 4. Append your actual request, such as: *"I want to add a self-hosted password manager (Vaultwarden) to this server. Based on my existing Caddy reverse proxy setup and subvolume architecture, write the NixOS configuration block I need to add."*
 

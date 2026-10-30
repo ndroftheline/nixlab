@@ -17,7 +17,8 @@
         modules = [
           disko.nixosModules.disko
           ./disko.nix
-          ./configuration.nix # Includes hardware, networking, and common.nix
+          ./configuration.nix
+          ./hardware-configuration.nix
         ];
       };
 

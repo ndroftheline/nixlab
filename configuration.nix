@@ -66,8 +66,8 @@
   ];
 
   # System services
-  # Enable VS Code Server patching for remote development
-  services.vscode-server.enable = true;
+  # Enable shim to provide standard Linux linker paths so VS Code's binaries run natively out of the box
+  programs.nix-ld.enable = true;
 
   # Declarative directory enforcement and permissions on boot
   system.activationScripts.sharedPermissions = {
@@ -94,8 +94,6 @@
         "workgroup" = "WORKGROUP";
         "server string" = "Home Server";
         "netbios name" = "homeserver";
-        "security" = "user";
-        "map to guest" = "Never";
       };
       "Data" = {
         "path" = "/mnt/data";
@@ -302,7 +300,7 @@
     }; 
   };
 
-  # Ensure the web ports are wide open
+  # Ensure the web ports are open
   networking.firewall.allowedTCPPorts = [ 80 443 ];
 
   system.stateVersion = "25.11";
